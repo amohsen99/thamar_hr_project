@@ -45,7 +45,7 @@ services:
       - HOST=pg-db
       - USER=odoo19
       - PASSWORD=odoo19
-    command: odoo -i base -d odoo19
+    command: odoo
     volumes:
       - ./etc:/etc/odoo
       - ../../../enterprise-19.0:/mnt/enterprise_addons
