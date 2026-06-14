@@ -33,7 +33,7 @@ services:
     restart: always
 
   odoo:
-    image: odoo:19.0
+    build: .
     container_name: odoo
     logging: *default-logging
     depends_on:
