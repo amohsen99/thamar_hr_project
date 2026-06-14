@@ -1,7 +1,11 @@
+version: "3.8"
 
 networks:
-  lp-apps:
-    external: true
+  thmar-apps:
+    external: true # الربط على شبكة الأودو الخارجية
+
+volumes:
+  pgadmin-data:
 
 services:
   pgadmin:
@@ -9,15 +13,11 @@ services:
     container_name: pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com # TODO change
-      PGADMIN_DEFAULT_PASSWORD: postgres # TODO change
-      #SCRIPT_NAME: /pgadmin4
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
     ports:
-    - "5050:80"
-    # networks:
-    #   - lp-apps  
+      - "5050:80"
+    networks:
+      - thmar-apps
     volumes:
-    - pgadmin:/var/lib/pgadmin
-
-volumes:
-  pgadmin:
+      - pgadmin-data:/var/lib/pgadmin

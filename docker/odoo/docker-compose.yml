@@ -1,34 +1,56 @@
-# docker network create lp-apps
+version: "3.8"
+
 networks:
-  odoo_lp-apps:
-    external: true
-
-services:
-  odoo:
-    build: .
-    container_name: odoo
-    ports:
-      - "8019:8019"
-      # - "7072:7072"
-    volumes:
-      # - /home/mohsen/Documents/Laplace/Projects/odoo18/addons_ams:/mnt/extra-addons
-      # mirror third party custom modules
-      # - /home/mohsen/Documents/Laplace/Projects/odoo18/addons_thp/muk_web_theme:/mnt/odoo18/addons_thp/muk_web_theme:ro #
-      # - /home/mohsen/Documents/Laplace/Projects/odoo18/addons_thp/lp:/mnt/odoo18/addons_thp/lp:ro #
-      - /home/ubuntu/docker-projects/odoo/odoo_e/etc:/etc/odoo # mirror odoo config
-
-      # /var/log/odoo/odoo #shoulde be exist before compose with full permission any user
-      # sudo mkdir -p /var/log/odoo/odoo , sudo chmod 777 /var/log/odoo/odoo
-      - /var/log/odoo/mep18:/var/log/odoo
-      - odoo-web-data:/var/lib/odoo
-    environment: # avoid this u should use it in etc/odoo.conf
-      - HOST=pg-db # Using the container ID from your output
-    #   - USER=odoo18
-    #   - PASSWORD=odoo 
-    restart: always             # run as a service
-
-    networks:
-      - odoo_lp-apps
+  thmar-apps:
+    name: thmar-apps # تثبيت اسم الشبكة في دوكر عشان الملفات التانية تشوفها
+    driver: bridge
 
 volumes:
+  db-data:
   odoo-web-data:
+
+# إعداد الـ Logging لتقليل حجم الـ Logs وحماية مساحة السيرفر
+x-logging: &default-logging
+  options:
+    max-size: "50m"
+    max-file: "3"
+  driver: json-file
+
+services:
+  pg-db:
+    image: postgres:15
+    container_name: pg-db
+    logging: *default-logging
+    environment:
+      - POSTGRES_USER=odoo19
+      - POSTGRES_PASSWORD=odoo19
+    ports:
+      - "5433:5432"
+    networks:
+      - thmar-apps
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: always
+
+  odoo:
+    image: odoo:19.0
+    container_name: odoo
+    logging: *default-logging
+    depends_on:
+      - pg-db
+    ports:
+      - "8019:8069"
+      - "8072:8072"
+    environment:
+      - HOST=pg-db
+      - USER=odoo19
+      - PASSWORD=odoo19
+    command: odoo --workers=3 --gevent-port=8072 --proxy-mode    
+    volumes:
+      - ./etc:/etc/odoo
+      - /home/mohsen/Documents/odoo19/enterprise-19.0:/mnt/enterprise_addons
+      - /home/mohsen/Documents/odoo19/thamar_hr_project:/mnt/thamar_hr_project
+      - odoo-web-data:/var/lib/odoo
+    networks:
+      - thmar-apps
+    restart: always

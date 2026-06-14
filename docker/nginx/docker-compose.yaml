@@ -1,0 +1,31 @@
+version: "3.8"
+
+networks:
+  thmar-apps:
+    external: true # الربط على شبكة الأودو الخارجية
+
+volumes:
+  npm-data:
+  npm-letsencrypt:
+
+x-logging: &default-logging
+  options:
+    max-size: "50m"
+    max-file: "3"
+  driver: json-file
+
+services:
+  npm-app:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: npm-app
+    restart: always
+    logging: *default-logging
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - thmar-apps
