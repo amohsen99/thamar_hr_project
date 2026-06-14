@@ -45,7 +45,7 @@ services:
       - HOST=pg-db
       - USER=odoo19
       - PASSWORD=odoo19
-    command: odoo --workers=3 --gevent-port=8072 --proxy-mode    
+    command: odoo -i base -d odoo19
     volumes:
       - ./etc:/etc/odoo
       - /home/mohsen/Documents/odoo19/enterprise-19.0:/mnt/enterprise_addons

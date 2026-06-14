@@ -1,0 +1,68 @@
+name: Deploy Odoo Modules
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to remote Odoo server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            COMPOSE_FILE="docker/server/odoo.yaml"
+            PROJECT_DIR="/root/odoo19/thamar_dani"
+
+            if [ -d "$PROJECT_DIR" ]; then
+                echo "Directory exists, navigating..."
+            else
+                echo "Project directory not found at: $PROJECT_DIR"
+                exit 1
+            fi
+
+            cd "$PROJECT_DIR"
+            echo "Current path: $PROJECT_DIR"
+
+            if [ ! -f "$COMPOSE_FILE" ]; then
+              echo "Docker compose file not found: $COMPOSE_FILE"
+              exit 1
+            fi
+
+            echo "Syncing with latest changes..."
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "Updating containers..."
+            docker compose -f "$COMPOSE_FILE" up -d --build
+
+            echo "Regenerating assets for Live database..."
+            docker compose -f "$COMPOSE_FILE" run --rm --no-deps odoo odoo -d Live -u web --stop-after-init
+
+            echo "Soft restarting Odoo service..."
+            docker compose -f "$COMPOSE_FILE" restart odoo
+
+            echo "Waiting for Odoo to be ready on port 8069..."
+            sleep 10
+            
+            for i in {1..12}; do
+              if curl -s http://localhost:8069 > /dev/null; then
+                echo "Odoo is up and responding!"
+                break
+              fi
+              echo "Odoo registry is still loading... waiting 5s (Attempt $i/12)"
+              sleep 5
+            done
+
+            echo "Deployment completed successfully!"
