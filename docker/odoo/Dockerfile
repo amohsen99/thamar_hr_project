@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y nodejs npm \
     && apt-get clean
 
 # 4. تثبيت مكتبة pyzk ومكتبة hijri-converter الأساسية للمشروع
-RUN pip3 install pyzk hijri-converter==2.3.1
+RUN pip3 install pyzk --break-system-packages
 
 # 5. العودة للمستخدم odoo العادي لأمان وحماية الحاوية
 USER odoo
