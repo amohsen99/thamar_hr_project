@@ -48,8 +48,9 @@ services:
     command: odoo -i base -d odoo19
     volumes:
       - ./etc:/etc/odoo
-      - /home/mohsen/Documents/odoo19/enterprise-19.0:/mnt/enterprise_addons
-      - /home/mohsen/Documents/odoo19/thamar_hr_project:/mnt/thamar_hr_project
+      - ../../../enterprise-19.0:/mnt/enterprise_addons
+      - ../../:/mnt/thamar_hr_project
+      - ../../../thmar_dani:/mnt/custom_addons
       - odoo-web-data:/var/lib/odoo
     networks:
       - thmar-apps
