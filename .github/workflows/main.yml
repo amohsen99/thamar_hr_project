@@ -3,7 +3,7 @@ name: Deploy Odoo 19 to Production
 on:
   push:
     branches:
-      - main  # هيبدأ الـ Deployment تلقائياً أول ما تعمل Push أو Merge على فرع main
+      - master  # هيبدأ الـ Deployment تلقائياً أول ما تعمل Push أو Merge على فرع main
 
 jobs:
   deploy:
@@ -27,7 +27,7 @@ jobs:
             cd ~/Documents/odoo19/thamar_hr_project
             
             # 2. سحب الكود الجديد من جيتهاب
-            git pull origin main
+            git pull origin master
             
             # 3. إعادة بناء الـ Dockerfile وتحديث الحاويات بالنسخة الجديدة
             echo "جاري بناء كود أودو 19 وتحديث الـ Containers..."
