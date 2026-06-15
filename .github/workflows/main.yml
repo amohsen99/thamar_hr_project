@@ -19,7 +19,7 @@ jobs:
           echo "============ بدء عملية الـ Deployment المحلية ============"
           
           # 1. الدخول لمجلد المشروع (اضبط المسار حسب مكانه الفعلي على السيرفر)
-          cd ~/Documents/odoo19/thamar_hr_project
+          cd ~/Documents/odoo19/thamar_hr_project/docker/odoo
           
           # 2. سحب الكود الجديد
           git pull origin master
