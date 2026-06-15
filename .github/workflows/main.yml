@@ -16,7 +16,7 @@ jobs:
 
       - name: Build and Update Odoo Containers
         run: |
-          echo "============ بدء عملية الـ Deployment المحليةwewe ============"
+          echo "============ بدء عملية الـ Deployment المحليةwewewe ============"
           
           # 1. الدخول لمجلد المشروع (اضبط المسار حسب مكانه الفعلي على السيرفر)
           cd ~/Documents/odoo19/thamar_hr_project/docker/odoo
