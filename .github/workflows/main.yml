@@ -1,40 +1,33 @@
-name: Deploy Odoo 19 to Production
+name: Deploy Odoo 19 to Local Production
 
 on:
   push:
     branches:
-      - master  # هيبدأ الـ Deployment تلقائياً أول ما تعمل Push أو Merge على فرع main
+      - master
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    # التغيير السحري هنا: بنقول لجيتهاب شغل الـ Job دي على السيرفر المحلي بتاعي
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Deploy to Production Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}       # قراءة آي بي السيرفر ديناميكياً
-          username: ${{ secrets.SERVER_USER }}   # قراءة اسم المستخدم ديناميكياً
-          password: ${{ secrets.SSH_PASSWORD }}   # قراءة الباسورد المشفر
-          port: 22
-          script: |
-            echo "============ بدء عملية الـ Deployment ============"
-            
-            # 1. الدخول إلى مجلد المشروع الرئيسي على السيرفر
-            cd ~/Documents/odoo19/thamar_hr_project
-            
-            # 2. سحب الكود الجديد من جيتهاب
-            git pull origin master
-            
-            # 3. إعادة بناء الـ Dockerfile وتحديث الحاويات بالنسخة الجديدة
-            echo "جاري بناء كود أودو 19 وتحديث الـ Containers..."
-            docker compose up -d --build
-            
-            # 4. ترقية الموديولات تلقائياً داخل قاعدة البيانات (بدون downtime للـ Proxy)
-            echo "جاري تحديث الموديولات المخصصة في الخلفية..."
-            docker compose exec -d odoo odoo -u all --stop-after-init
-            
-            echo "============ تم الـ Deployment بنجاح! 🚀 ============"
+      - name: Build and Update Odoo Containers
+        run: |
+          echo "============ بدء عملية الـ Deployment المحلية ============"
+          
+          # 1. الدخول لمجلد المشروع (اضبط المسار حسب مكانه الفعلي على السيرفر)
+          cd ~/Documents/odoo19/thamar_hr_project
+          
+          # 2. سحب الكود الجديد
+          git pull origin master
+          
+          # 3. بناء وتحديث دوكر
+          docker compose up -d --build
+          
+          # 4. ترقية الموديولات
+          docker compose exec -d odoo odoo -u all --stop-after-init
+          
+          echo "============ تم التحديث بنجاح داخلياً! 🚀 ============"
