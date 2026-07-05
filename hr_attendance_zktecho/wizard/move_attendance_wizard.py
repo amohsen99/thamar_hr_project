@@ -2,7 +2,6 @@
 
 import logging
 import datetime
-import threading
 from collections import defaultdict
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -267,264 +266,23 @@ class move_attendance_wizard(models.TransientModel):
         return drafts_to_mark, creates, open_attendance, False
 
     # ------------------------------------------------------------------
-    # Background worker
-    # ------------------------------------------------------------------
-
-    def _run_move_in_background(self, dbname, uid, date1, date2,
-                                employee_ids, context):
-        """Run the heavy move processing in a background thread with its
-        own cursor.  This prevents the HTTP request from timing out."""
-        try:
-            registry = api.Registry(dbname)
-            with registry.cursor() as cr:
-                env = api.Environment(cr, uid, context)
-                self_bg = env[self._name]
-
-                # Read config
-                routing_mode, max_shift_hours, anti_dup_minutes = \
-                    self_bg._get_config()
-                anti_dup_delta = datetime.timedelta(minutes=anti_dup_minutes)
-
-                _logger.info(
-                    'BG Move started: mode=%s, max_shift=%dh, anti_dup=%dmin',
-                    routing_mode, max_shift_hours, anti_dup_minutes)
-
-                HrAttendance = env['hr.attendance'].with_context(
-                    skip_work_entries=True)
-                DraftAttendance = env['hr.draft.attendance']
-
-                # ── 1. Fetch all draft records ──
-                draft_domain = [
-                    ('attendance_status', '!=', 'sign_none'),
-                    ('name', '>=', date1),
-                    ('name', '<=', date2),
-                    ('moved', '=', False),
-                ]
-                if employee_ids:
-                    draft_domain.append(
-                        ('employee_id', 'in', employee_ids))
-
-                all_drafts = DraftAttendance.search(
-                    draft_domain, order='name asc')
-
-                if not all_drafts:
-                    _logger.info('BG Move: no draft records to process.')
-                    # Send bus notification
-                    env['bus.bus']._sendone(
-                        'move_attendance_%s' % uid,
-                        'simple_notification',
-                        {
-                            'title': 'Move Complete',
-                            'message': 'No draft attendance records to move.',
-                            'type': 'warning',
-                            'sticky': False,
-                        })
-                    cr.commit()
-                    return
-
-                # ── Pre-materialize draft data ──
-                draft_data_list = []
-                for draft in all_drafts:
-                    draft_data_list.append({
-                        'id': draft.id,
-                        'name': draft.name,
-                        'employee_id': draft.employee_id.id,
-                        'attendance_status': draft.attendance_status,
-                        'device_id': draft.device_id.id
-                            if draft.device_id else False,
-                    })
-
-                drafts_by_emp = defaultdict(list)
-                emp_ids_in_scope = set()
-                for dd in draft_data_list:
-                    drafts_by_emp[dd['employee_id']].append(dd)
-                    emp_ids_in_scope.add(dd['employee_id'])
-
-                emp_ids_list = list(emp_ids_in_scope)
-                total_emps = len(emp_ids_list)
-
-                # ── 2. Open attendances (no check_out) ──
-                open_attendances_recs = HrAttendance.search([
-                    ('employee_id', 'in', emp_ids_list),
-                    ('check_out', '=', False),
-                ], order='check_in desc')
-
-                open_att_id_map = {}
-                for att in open_attendances_recs:
-                    if att.employee_id.id not in open_att_id_map:
-                        open_att_id_map[att.employee_id.id] = att.id
-
-                # ── 3. Existing hr.attendance in date range ──
-                existing_attendances = HrAttendance.search([
-                    ('employee_id', 'in', emp_ids_list),
-                    ('check_in', '>=', date1),
-                    ('check_in', '<=', date2),
-                ])
-
-                existing_id_set = {}
-                for att in existing_attendances:
-                    key = (att.employee_id.id, str(att.check_in))
-                    existing_id_set[key] = att.id
-
-                # Employee name map
-                emp_name_map = {}
-                for emp in env['hr.employee'].browse(emp_ids_list):
-                    emp_name_map[emp.id] = emp.name
-
-                # ── 4. Process per employee with batched commits ──
-                error_lines = []
-                moved_count = 0
-                skipped_count = 0
-                dedup_skipped = 0
-
-                # Select processor
-                if routing_mode == 'device_type':
-                    processor = self_bg._process_device_type_mode
-                elif routing_mode == 'forced_device':
-                    processor = self_bg._process_forced_device_mode
-                else:
-                    processor = self_bg._process_sequence_mode
-
-                COMMIT_BATCH = 50  # commit every N employees
-
-                for emp_idx, emp_id in enumerate(emp_ids_list):
-                    emp_name = emp_name_map.get(emp_id, str(emp_id))
-                    emp_drafts = drafts_by_emp[emp_id]
-
-                    try:
-                        # Re-browse open attendance
-                        open_att_id = open_att_id_map.get(emp_id)
-                        open_attendance = HrAttendance.browse(
-                            open_att_id) if open_att_id else None
-                        if open_attendance and open_attendance.check_out:
-                            open_attendance = None
-
-                        # Re-build existing_set for this employee
-                        emp_existing_set = {}
-                        for key, att_id in existing_id_set.items():
-                            if key[0] == emp_id:
-                                emp_existing_set[key] = \
-                                    HrAttendance.browse(att_id)
-
-                        last_punch_time = None
-                        emp_marks = []
-
-                        for dd in emp_drafts:
-                            punch_time = dd['name']
-                            draft_id = dd['id']
-                            try:
-                                # Anti-Duplicate Filter
-                                if anti_dup_minutes > 0 and last_punch_time:
-                                    if (punch_time - last_punch_time) \
-                                            < anti_dup_delta:
-                                        dedup_skipped += 1
-                                        emp_marks.append((draft_id, None))
-                                        continue
-
-                                last_punch_time = punch_time
-                                line = DraftAttendance.browse(draft_id)
-
-                                marks, creates, open_attendance, \
-                                    was_skipped = processor(
-                                        line, open_attendance, emp_id,
-                                        emp_name, max_shift_hours,
-                                        emp_existing_set, HrAttendance)
-
-                                for draft_rec, att_id in marks:
-                                    emp_marks.append(
-                                        (draft_rec.id, att_id))
-
-                                if was_skipped:
-                                    skipped_count += 1
-                                else:
-                                    moved_count += 1
-
-                            except Exception as e:
-                                error_lines.append(
-                                    f"{emp_name} @ {punch_time}: {str(e)}")
-                                _logger.error(
-                                    'Error moving draft %s for %s: %s',
-                                    draft_id, emp_name, str(e))
-
-                        # Mark drafts as moved
-                        if emp_marks:
-                            for draft_id, att_id in emp_marks:
-                                vals = {'moved': True}
-                                if att_id:
-                                    vals['moved_to'] = att_id
-                                DraftAttendance.browse(draft_id).write(vals)
-
-                        # Update open_att_id_map
-                        if open_attendance and not open_attendance.check_out:
-                            open_att_id_map[emp_id] = open_attendance.id
-                        else:
-                            open_att_id_map.pop(emp_id, None)
-
-                    except Exception as e:
-                        error_lines.append(
-                            f"{emp_name}: transaction failed: {str(e)}")
-                        _logger.error(
-                            'Transaction failed for employee %s: %s',
-                            emp_name, str(e))
-
-                    # ── Batched commit every N employees ──
-                    if (emp_idx + 1) % COMMIT_BATCH == 0:
-                        cr.commit()
-                        # Invalidate cache to free memory
-                        env.invalidate_all()
-                        # Re-fetch models after invalidation
-                        HrAttendance = env['hr.attendance'].with_context(
-                            skip_work_entries=True)
-                        DraftAttendance = env['hr.draft.attendance']
-                        _logger.info(
-                            'BG Progress: %d/%d employees (moved: %d)',
-                            emp_idx + 1, total_emps, moved_count)
-
-                # Final commit
-                cr.commit()
-
-                # ── 5. Summary ──
-                msg = (
-                    f"Mode: {routing_mode} | "
-                    f"Moved: {moved_count} | "
-                    f"Skipped (dup): {skipped_count} | "
-                    f"Skipped (anti-dup): {dedup_skipped}"
-                )
-                if error_lines:
-                    msg += "\n\nErrors:\n" + "\n".join(
-                        error_lines[:20])  # limit to 20 errors
-                    if len(error_lines) > 20:
-                        msg += f"\n... and {len(error_lines) - 20} more"
-
-                _logger.info('BG Move completed: %s', msg)
-
-                # Send bus notification to the user
-                notif_type = 'success' if not error_lines else 'warning'
-                env['bus.bus']._sendone(
-                    'move_attendance_%s' % uid,
-                    'simple_notification',
-                    {
-                        'title': 'Move Attendance Complete',
-                        'message': msg,
-                        'type': notif_type,
-                        'sticky': True,
-                    })
-                cr.commit()
-
-        except Exception as e:
-            _logger.error('BG Move fatal error: %s', str(e), exc_info=True)
-
-    # ------------------------------------------------------------------
     # Main action
     # ------------------------------------------------------------------
 
     def move_confirm(self):
-        """Launch the move processing in a background thread and return
-        immediately so the browser doesn't time out."""
-        self.ensure_one()
-
-        # ── Quick validation ──
+        HrAttendance = self.env['hr.attendance'].with_context(skip_work_entries=True)
         DraftAttendance = self.env['hr.draft.attendance']
+
+        routing_mode, max_shift_hours, anti_dup_minutes = self._get_config()
+        anti_dup_delta = datetime.timedelta(minutes=anti_dup_minutes)
+
+        _logger.info(
+            'Move wizard started: mode=%s, max_shift=%dh, anti_dup=%dmin',
+            routing_mode, max_shift_hours, anti_dup_minutes)
+
+        # ──────────────────────────────────────────────────────────────
+        # 1. BULK FETCH: all draft records in ONE query
+        # ──────────────────────────────────────────────────────────────
         draft_domain = [
             ('attendance_status', '!=', 'sign_none'),
             ('name', '>=', self.date1),
@@ -534,9 +292,9 @@ class move_attendance_wizard(models.TransientModel):
         if self.employee_ids:
             draft_domain.append(('employee_id', 'in', self.employee_ids.ids))
 
-        draft_count = DraftAttendance.search_count(draft_domain)
+        all_drafts = DraftAttendance.search(draft_domain, order='name asc')
 
-        if not draft_count:
+        if not all_drafts:
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -548,38 +306,194 @@ class move_attendance_wizard(models.TransientModel):
                 }
             }
 
-        # ── Capture parameters for the background thread ──
-        dbname = self.env.cr.dbname
-        uid = self.env.uid
-        date1 = self.date1
-        date2 = self.date2
-        employee_ids = self.employee_ids.ids if self.employee_ids else []
-        context = dict(self.env.context)
+        # ──────────────────────────────────────────────────────────────
+        # PRE-MATERIALIZE: read all draft data into plain Python dicts
+        # so nothing depends on ORM cache after cr.commit().
+        # ──────────────────────────────────────────────────────────────
+        draft_data_list = []
+        for draft in all_drafts:
+            draft_data_list.append({
+                'id': draft.id,
+                'name': draft.name,
+                'employee_id': draft.employee_id.id,
+                'attendance_status': draft.attendance_status,
+                'device_id': draft.device_id.id if draft.device_id else False,
+            })
 
-        # ── Launch background thread ──
-        thread = threading.Thread(
-            target=self._run_move_in_background,
-            args=(dbname, uid, date1, date2, employee_ids, context),
-            name='move_attendance_bg',
-            daemon=True,
+        # Group drafts by employee_id, preserving chronological order
+        drafts_by_emp = defaultdict(list)
+        emp_ids_in_scope = set()
+        for dd in draft_data_list:
+            drafts_by_emp[dd['employee_id']].append(dd)
+            emp_ids_in_scope.add(dd['employee_id'])
+
+        emp_ids_list = list(emp_ids_in_scope)
+
+        # ──────────────────────────────────────────────────────────────
+        # 2. BULK FETCH: existing open attendances (no check_out)
+        #    Materialize to IDs for re-browsing in fresh cursors.
+        # ──────────────────────────────────────────────────────────────
+        open_attendances_recs = HrAttendance.search([
+            ('employee_id', 'in', emp_ids_list),
+            ('check_out', '=', False),
+        ], order='check_in desc')
+
+        open_att_id_map = {}
+        for att in open_attendances_recs:
+            if att.employee_id.id not in open_att_id_map:
+                open_att_id_map[att.employee_id.id] = att.id
+
+        # ──────────────────────────────────────────────────────────────
+        # 3. BULK FETCH: existing hr.attendance in date range (IDs only)
+        # ──────────────────────────────────────────────────────────────
+        existing_attendances = HrAttendance.search([
+            ('employee_id', 'in', emp_ids_list),
+            ('check_in', '>=', self.date1),
+            ('check_in', '<=', self.date2),
+        ])
+
+        existing_id_set = {}
+        for att in existing_attendances:
+            key = (att.employee_id.id, str(att.check_in))
+            existing_id_set[key] = att.id
+
+        # Pre-cache employee names
+        emp_name_map = {}
+        if emp_ids_list:
+            for emp in self.env['hr.employee'].browse(emp_ids_list):
+                emp_name_map[emp.id] = emp.name
+
+        # ──────────────────────────────────────────────────────────────
+        # 4. PROCESS: iterate by employee, use fresh cursor per employee
+        #    to avoid "cursor already closed" caused by ORM recompute
+        #    cascades (hr.attendance overtime fields) during flush/commit.
+        # ──────────────────────────────────────────────────────────────
+        error_lines = []
+        moved_count = 0
+        skipped_count = 0
+        dedup_skipped = 0
+
+        for emp_idx, emp_id in enumerate(emp_ids_list):
+            emp_name = emp_name_map.get(emp_id, str(emp_id))
+            emp_drafts = drafts_by_emp[emp_id]
+
+            try:
+                new_cr = self.env.registry.cursor()
+                try:
+                    new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+                    new_HrAttendance = new_env['hr.attendance'].with_context(skip_work_entries=True)
+                    new_DraftAttendance = new_env['hr.draft.attendance']
+
+                    # Re-browse open attendance in new env
+                    open_att_id = open_att_id_map.get(emp_id)
+                    open_attendance = new_HrAttendance.browse(open_att_id) if open_att_id else None
+                    if open_attendance and open_attendance.check_out:
+                        open_attendance = None
+
+                    # Re-build existing_set for this employee in new env
+                    emp_existing_set = {}
+                    for key, att_id in existing_id_set.items():
+                        if key[0] == emp_id:
+                            emp_existing_set[key] = new_HrAttendance.browse(att_id)
+
+                    # Select the processor function based on routing mode
+                    if routing_mode == 'device_type':
+                        processor = self._process_device_type_mode
+                    elif routing_mode == 'forced_device':
+                        processor = self._process_forced_device_mode
+                    else:
+                        processor = self._process_sequence_mode
+
+                    last_punch_time = None
+                    emp_marks = []
+
+                    for dd in emp_drafts:
+                        punch_time = dd['name']
+                        draft_id = dd['id']
+                        try:
+                            # ── Anti-Duplicate Filter ──
+                            if anti_dup_minutes > 0 and last_punch_time:
+                                if (punch_time - last_punch_time) < anti_dup_delta:
+                                    dedup_skipped += 1
+                                    emp_marks.append((draft_id, None))
+                                    continue
+
+                            last_punch_time = punch_time
+                            line = new_DraftAttendance.browse(draft_id)
+
+                            # ── Route to the selected processor ──
+                            marks, creates, open_attendance, was_skipped = processor(
+                                line, open_attendance, emp_id, emp_name,
+                                max_shift_hours, emp_existing_set, new_HrAttendance)
+
+                            for draft_rec, att_id in marks:
+                                emp_marks.append((draft_rec.id, att_id))
+
+                            if was_skipped:
+                                skipped_count += 1
+                            else:
+                                moved_count += 1
+
+                        except Exception as e:
+                            error_lines.append(f"{emp_name} @ {punch_time}: {str(e)}")
+                            _logger.error(
+                                'Error moving draft %s for %s: %s',
+                                draft_id, emp_name, str(e))
+
+                    # ── Mark this employee's drafts as moved ──
+                    if emp_marks:
+                        for draft_id, att_id in emp_marks:
+                            vals = {'moved': True}
+                            if att_id:
+                                vals['moved_to'] = att_id
+                            new_DraftAttendance.browse(draft_id).write(vals)
+
+                    # Update open_att_id_map so cross-employee lookups
+                    # (if any) stay correct
+                    if open_attendance and not open_attendance.check_out:
+                        open_att_id_map[emp_id] = open_attendance.id
+                    else:
+                        open_att_id_map.pop(emp_id, None)
+
+                    new_cr.commit()
+                except Exception:
+                    new_cr.rollback()
+                    raise
+                finally:
+                    new_cr.close()
+            except Exception as e:
+                error_lines.append(f"{emp_name}: transaction failed: {str(e)}")
+                _logger.error(
+                    'Transaction failed for employee %s: %s', emp_name, str(e))
+
+            if (emp_idx + 1) % 50 == 0:
+                _logger.info(
+                    'Progress: %d/%d employees processed (moved: %d)',
+                    emp_idx + 1, len(emp_ids_list), moved_count)
+
+        # ──────────────────────────────────────────────────────────────
+        # 5. SUMMARY
+        # ──────────────────────────────────────────────────────────────
+        msg = (
+            f"Mode: {routing_mode} | "
+            f"Moved: {moved_count} | "
+            f"Skipped (dup): {skipped_count} | "
+            f"Skipped (anti-dup): {dedup_skipped}"
         )
-        thread.start()
+        _logger.info(msg)
 
-        _logger.info(
-            'Move wizard: launched background thread for %d draft records',
-            draft_count)
+        if error_lines:
+            raise UserError(
+                msg + "\n\nErrors encountered:\n" + "\n".join(error_lines))
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Processing Started'),
-                'message': _(
-                    'Moving %d draft attendance records in the background. '
-                    'You will be notified when it completes. '
-                    'You can continue working normally.'
-                ) % draft_count,
-                'type': 'info',
-                'sticky': True,
+                'title': _('Move Complete'),
+                'message': msg,
+                'type': 'success',
+                'sticky': False,
             }
         }
+
