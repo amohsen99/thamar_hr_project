@@ -10,11 +10,12 @@
     'version': '19.0.1.0.0',
     'depends': ['base', 'hr', 'hr_attendance', 'resource'],
     'data': [
-        'data/zk_techo_data.xml',
+        # 'data/zk_techo_data.xml',
         'security/biometricdevice_security.xml',
         'security/ir.model.access.csv',
         'views/res_config_settings_view.xml',
         'views/hr_attendance_view.xml',
+        'wizard/download_all_devices_wizard_view.xml',
         'views/biometricdevice_view.xml',
         'views/hr_extensionview.xml',
         'wizard/move_attendance_wizard_view.xml',

@@ -10,8 +10,11 @@
 			<field name="arch" type="xml">
 				<data>
                     <xpath expr="//page[@name='hr_settings']" position="after">
-                        <page string="Attendance Devices" name="attendance_device" groups="hr_attendance.group_hr_attendance_user">
-							<field name="attendance_devices" nolabel="1" context="{'default_name': id}" help="All the attendance devices linked to the employee are to be defined here"/>
+                        <page string="Attendance Devices" name="attendance_device">
+							<group>
+								<field name="global_attendance_id" help="Set a single attendance ID here if this employee uses the same ID on all devices. No need to add per-device records below."/>
+							</group>
+							<field name="attendance_devices" nolabel="1" context="{'default_name': id}" help="Define per-device attendance IDs only if the employee has different IDs on different devices. These take priority over the Global Attendance ID above."/>
 						</page>
                     </xpath>
 				</data>
@@ -117,15 +120,11 @@
 							<field name="attendance_status" help="Attendance type whether Sign-In or Sign-Out" readonly="moved"/>
 							<field name="employee_id" help="Employee for whose attendance is created" readonly="moved"/>
 							<field name="biometric_attendance_id" help="Corresponding record ID on attendance Device." readonly="1"/>
-							<field name="moved" readonly="True" string="Moved"/>
+							<field name="moved" string="Moved"/>
 							<field name="is_missing" invisible="1" />
 						</group>
 					</sheet>
-					<div class="oe_chatter">
-						<field name="message_follower_ids" widget="mail_followers"
-							help="Follow the server to keep track of environments and there services linked to this server" />
-						<field name="message_ids" widget="mail_thread" />
-					</div>
+					
 				</form>
 			</field>
 		</record>
