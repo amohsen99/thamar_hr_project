@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import threading
 from pytz import timezone, all_timezones
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 import logging
@@ -174,6 +175,44 @@ class BiomtericDeviceInfo(models.Model):
             if conn:
                 conn.disconnect()
         return True
+
+    def download_attendance_async(self):
+        """Button handler: launches download_attendance_oldapi in a background thread."""
+        self.ensure_one()
+        device_id = self.id
+        device_name = self.name
+        db_name = self.env.cr.dbname
+        uid = self.env.uid
+        context = dict(self.env.context)
+
+        def _run():
+            import odoo
+            with odoo.registry(db_name).cursor() as new_cr:
+                new_env = api.Environment(new_cr, uid, context)
+                device = new_env['biomteric.device.info'].browse(device_id)
+                try:
+                    device.download_attendance_oldapi()
+                    new_cr.commit()
+                    _logger.info('Background download completed for device %s', device_name)
+                except Exception as e:
+                    new_cr.rollback()
+                    _logger.error('Background download failed for device %s: %s', device_name, str(e))
+
+        thread = threading.Thread(target=_run, daemon=True)
+        thread.start()
+        _logger.info('Attendance download started in background for device %s', device_name)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Download Started'),
+                'message': _('Attendance download started in the background for "%s". '
+                             'You can continue working.') % device_name,
+                'type': 'info',
+                'sticky': True,
+            }
+        }
 
     def download_attendance_oldapi(self):
         hr_attendance = self.env['hr.draft.attendance']

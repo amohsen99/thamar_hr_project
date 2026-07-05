@@ -49,9 +49,9 @@
 							<button icon="fa-rss" name="test_connection_device"
 								type="object" string="Test Connection" class="oe_stat_button"
 								help="Test connection to the attendance device"/>
-							<button icon="fa-download" name="download_attendance_oldapi"
+							<button icon="fa-download" name="download_attendance_async"
 								type="object" string="Download Attendance" class="oe_stat_button"
-								help="Download Attendance from device"/>
+								help="Download Attendance from device (runs in background)"/>
 						</div>
 						<div class="oe_title">
 							<h1>
