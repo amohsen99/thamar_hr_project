@@ -54,9 +54,9 @@ services:
     logging: *default-logging
     depends_on:
       - pg-db
-    ports:
-      - "8019:8069"
-      - "8072:8072"
+    expose:
+      - "8069"
+      - "8072"
     environment:
       - HOST=pg-db
       - USER=odoo19
@@ -68,6 +68,20 @@ services:
       - ../../:/mnt/thamar_hr_project
       - ../../../thmar_dani:/mnt/custom_addons
       - odoo-web-data:/var/lib/odoo
+    networks:
+      - thmar-apps
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    logging: *default-logging
+    depends_on:
+      - odoo
+    ports:
+      - "8019:80"
+    volumes:
+      - ./etc/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - thmar-apps
     restart: always
