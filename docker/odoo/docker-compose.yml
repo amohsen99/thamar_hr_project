@@ -8,6 +8,7 @@ networks:
 volumes:
   db-data:
   odoo-web-data:
+  pgadmin-data:
 
 # إعداد الـ Logging لتقليل حجم الـ Logs وحماية مساحة السيرفر
 x-logging: &default-logging
@@ -45,7 +46,7 @@ services:
     networks:
       - thmar-apps
     volumes:
-      - pgadmin:/var/lib/pgadmin
+      - pgadmin-data:/var/lib/pgadmin
 
   odoo:
     build: .
