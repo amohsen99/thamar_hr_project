@@ -10,7 +10,7 @@
     'author': 'Thamar',
     'category': 'Human Resources',
     'version': '19.0.1.0.0',
-    'depends': ['hr'],
+    'depends': ['hr', 'hr_work_entry'],
     'data': [
         'views/hr_employee_views.xml',
     ],
