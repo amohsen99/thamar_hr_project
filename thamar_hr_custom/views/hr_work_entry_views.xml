@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Inherit the work entry list view to add "Regenerate Work Entries" button -->
+    <record id="hr_work_entry_view_tree_inherit_regenerate" model="ir.ui.view">
+        <field name="name">hr.work.entry.list.inherit.regenerate</field>
+        <field name="model">hr.work.entry</field>
+        <field name="inherit_id" ref="hr_work_entry.hr_work_entry_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="%(hr_work_entry.hr_work_entry_regeneration_wizard_action)d"
+                            string="Regenerate Work Entries"
+                            type="action"
+                            icon="fa-refresh"
+                            class="btn-secondary"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Action that opens Work Entries in list view first (faster than gantt) -->
     <record id="hr_work_entry_action_list" model="ir.actions.act_window">
         <field name="name">Work Entries (List)</field>
