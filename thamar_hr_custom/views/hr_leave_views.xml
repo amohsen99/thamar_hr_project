@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_leave_view_form_inherit_supervisor" model="ir.ui.view">
+        <field name="name">hr.leave.view.form.inherit.supervisor</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="can_supervisor_approve" invisible="1"/>
+                <field name="supervisor_id" invisible="1"/>
+                <field name="supervisor_approved" invisible="1"/>
+                <field name="requires_clinical_approval" invisible="1"/>
+                <field name="can_clinical_approve" invisible="1"/>
+                <field name="clinical_approved" invisible="1"/>
+                <button string="Supervisor Approve" name="action_supervisor_approve" type="object" class="btn-primary" invisible="not can_supervisor_approve"/>
+                <button string="Supervisor Refuse" name="action_supervisor_refuse" type="object" class="btn-secondary" invisible="not can_supervisor_approve"/>
+                <button string="Clinical Approve" name="action_clinical_approve" type="object" class="btn-primary" invisible="not can_clinical_approve"/>
+                <button string="Clinical Refuse" name="action_clinical_refuse" type="object" class="btn-secondary" invisible="not can_clinical_approve"/>
+            </xpath>
+            <xpath expr="//field[@name='holiday_status_id']" position="after">
+                <field name="supervisor_id" widget="many2one_avatar_employee" invisible="not supervisor_id"/>
+                <field name="supervisor_approved" readonly="1" groups="hr_holidays.group_hr_holidays_user" invisible="not supervisor_id"/>
+                <field name="clinical_approved" readonly="1" groups="hr_holidays.group_hr_holidays_user" invisible="not requires_clinical_approval"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

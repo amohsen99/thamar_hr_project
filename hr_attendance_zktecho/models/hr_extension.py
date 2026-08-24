@@ -108,6 +108,12 @@ class HrEmployee(models.Model):
                 employee.attendance_state = attendance_state
 
 
+class HrEmployeePublic(models.Model):
+    _inherit = "hr.employee.public"
+
+    global_attendance_id = fields.Char(string='Global Attendance ID', readonly=True)
+
+
 class EmployeeAttendanceDevices(models.Model):
     _name = 'employee.attendance.devices'
     _description = 'Employee Attendance Devices'

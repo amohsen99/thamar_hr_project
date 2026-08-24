@@ -12,3 +12,17 @@ class HrEmployee(models.Model):
         ('production_indirect', 'انتاجي غير مباشر'),
         ('production_direct', 'انتاجي مباشر'),
     ], string='Administrative Type')
+    supervisor_id = fields.Many2one('hr.employee', string='Supervisor', help="The person responsible for initial time off approvals.")
+
+
+class HrEmployeePublic(models.Model):
+    _inherit = 'hr.employee.public'
+
+    hire_date = fields.Datetime(string='Hire Date', readonly=True)
+    admin_type = fields.Selection([
+        ('admin_indirect', 'اداري غير مباشر'),
+        ('admin_direct', 'اداري مباشر'),
+        ('production_indirect', 'انتاجي غير مباشر'),
+        ('production_direct', 'انتاجي مباشر'),
+    ], string='Administrative Type', readonly=True)
+    supervisor_id = fields.Many2one('hr.employee.public', string='Supervisor', readonly=True)

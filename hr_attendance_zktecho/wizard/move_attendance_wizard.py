@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import datetime
 from collections import defaultdict
@@ -15,8 +13,19 @@ class move_attendance_wizard(models.TransientModel):
     _name = "move.draft.attendance.wizard"
     _description = 'Move Draft Attendance Wizard'
 
-    date1 = fields.Datetime('From', required=True)
-    date2 = fields.Datetime('To', required=True)
+    def _default_date1(self):
+        return fields.Datetime.now().replace(day=1, hour=0, minute=0, second=0)
+
+    def _default_date2(self):
+        today = fields.Datetime.now()
+        if today.month == 12:
+            last_day = today.replace(year=today.year+1, month=1, day=1) - datetime.timedelta(days=1)
+        else:
+            last_day = today.replace(month=today.month+1, day=1) - datetime.timedelta(days=1)
+        return last_day.replace(hour=23, minute=59, second=59)
+
+    date1 = fields.Datetime('From', required=True, default=_default_date1)
+    date2 = fields.Datetime('To', required=True, default=_default_date2)
     employee_ids = fields.Many2many('hr.employee', 'move_att_employee_rel', 'employee_id', 'wiz_id')
 
     # ------------------------------------------------------------------
@@ -497,3 +506,67 @@ class move_attendance_wizard(models.TransientModel):
             }
         }
 
+    def action_generate_work_entries(self):
+        """Manually trigger work entry generation for the selected dates/employees."""
+        self.ensure_one()
+
+        date_from = self.date1.date()
+        date_to = self.date2.date()
+
+        if self.employee_ids:
+            employees = self.employee_ids
+        else:
+            versions = self.env['hr.employee']._get_all_versions_with_contract_overlap_with_period(
+                date_from, date_to)
+            employees = versions.mapped('employee_id')
+
+        if not employees:
+            raise UserError(_("No employees with active contracts found for this period."))
+
+        we_success = 0
+        error_lines = []
+
+        _logger.info(
+            'Generating work entries manually for %d employees (%s → %s)',
+            len(employees), date_from, date_to)
+
+        for emp in employees:
+            try:
+                version = emp._get_version(date=date_from)
+                if not version:
+                    error_lines.append(
+                        f"{emp.name} (ID {emp.id}): No active version/contract")
+                    continue
+
+                if version.work_entry_source == 'attendance':
+                    # Direct attendance → work entry (bypasses watermark bug)
+                    version.generate_attendance_work_entries(date_from, date_to)
+                else:
+                    # Standard calendar pipeline
+                    emp.generate_work_entries(date_from, date_to, force=True)
+                we_success += 1
+            except Exception as e:
+                error_lines.append(f"{emp.name} (ID {emp.id}): {str(e)}")
+                _logger.error(
+                    'Failed to generate work entries for %s (ID %d): %s',
+                    emp.name, emp.id, str(e))
+
+        msg = f"Work Entries Generated: {we_success}/{len(employees)} OK"
+        if error_lines:
+            msg += f", {len(error_lines)} errors"
+
+        _logger.info(msg)
+
+        if error_lines:
+            raise UserError(msg + "\n\nErrors:\n" + "\n".join(error_lines[:20]))
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Work Entries Generated'),
+                'message': msg,
+                'type': 'success',
+                'sticky': False,
+            }
+        }
