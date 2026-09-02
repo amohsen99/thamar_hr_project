@@ -22,9 +22,7 @@ class CartellaController(http.Controller):
         if not card.exists():
             return request.not_found()
 
-        base_url = request.env['ir.config_parameter'].sudo().get_param(
-            'web.base.url', ''
-        ).rstrip('/')
+        base_url = request.env['cartella.card']._get_public_base_url()
 
         return request.render(
             'thmar_textile_cartella.cartella_card_public_page',

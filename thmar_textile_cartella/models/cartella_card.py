@@ -139,17 +139,53 @@ class CartellaCard(models.Model):
             if not rec.id:
                 rec.record_url = ''
                 continue
-            base_url = (
-                self.env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
-                or self.env['ir.config_parameter'].sudo().get_param('report.url', '').rstrip('/')
-            )
-            if not base_url:
-                try:
-                    from odoo.http import request
-                    base_url = request.httprequest.url_root.rstrip('/')
-                except Exception:
-                    base_url = ''
+            base_url = self._get_public_base_url()
             rec.record_url = f"{base_url}/cartella/view/{rec.id}" if base_url else f"/cartella/view/{rec.id}"
+
+    @api.model
+    def _get_public_base_url(self):
+        """
+        استنتاج الـ base URL العام مع احترام:
+        1) system parameter thmar_textile_cartella.public_base_url (manual override)
+        2) web.base.url (إذا كان public)
+        3) request headers (X-Forwarded-Host / Host) — يعمل خلف nginx بدون ضبط web.base.url
+        """
+        Param = self.env['ir.config_parameter'].sudo()
+        override = Param.get_param('thmar_textile_cartella.public_base_url', '').rstrip('/')
+        if override:
+            return override
+        web_base = Param.get_param('web.base.url', '').rstrip('/')
+        if web_base and 'localhost' not in web_base and 'odoo:' not in web_base:
+            return web_base
+        try:
+            from odoo.http import request
+            hr = request.httprequest
+            forwarded_host = hr.headers.get('X-Forwarded-Host')
+            host = forwarded_host or hr.headers.get('Host') or hr.host
+            scheme = (
+                hr.headers.get('X-Forwarded-Proto')
+                or ('https' if hr.is_secure else 'http')
+            )
+            if host:
+                return f"{scheme}://{host}"
+        except Exception:
+            pass
+        return web_base
+
+    def _get_public_base_url(self):
+        """يرجع الـ base URL العام المستخدم في الـ QR (مع المنفذ 8019 أو 8069 حسب الإعداد)."""
+        param = self.env['ir.config_parameter'].sudo()
+        url = param.get_param('thmar_textile_cartella.public_base_url', '').rstrip('/')
+        if url:
+            return url
+        url = param.get_param('web.base.url', '').rstrip('/')
+        if url:
+            return url
+        try:
+            from odoo.http import request
+            return request.httprequest.url_root.rstrip('/')
+        except Exception:
+            return ''
 
     def _compute_barcode_src(self):
         from urllib.parse import quote

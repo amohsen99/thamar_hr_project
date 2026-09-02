@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y nodejs npm \
 # 4. تثبيت مكتبة pyzk ومكتبة hijri-converter الأساسية للمشروع
 RUN pip3 install pyzk --break-system-packages
 
-# 4.1. تثبيت مكتبة qrcode لتوليد رموز QR داخل تقارير QWeb
-RUN pip3 install --break-system-packages "qrcode[pil]" Pillow
+# 4.1. تثبيت مكتبات Python الإضافية من requirements.txt (qrcode لتوليد رموز QR)
+COPY etc/requirements.txt /tmp/requirements.txt
+RUN pip3 install --break-system-packages -r /tmp/requirements.txt
 
 # 5. العودة للمستخدم odoo العادي لأمان وحماية الحاوية
 USER odoo
