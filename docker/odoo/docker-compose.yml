@@ -54,11 +54,9 @@ services:
     logging: *default-logging
     depends_on:
       - pg-db
-    expose:
-      - "8069"
-      - "8072"
     ports:
-      - "8019:8069"
+      - "8069:8069"   # Web — مباشر بدون reverse proxy
+      - "8072:8072"   # WebSocket / Longpolling
     environment:
       - HOST=pg-db
       - USER=odoo19
@@ -74,14 +72,19 @@ services:
       - thmar-apps
     restart: always
 
-    nginx:
-      image: nginx:alpine
-      container_name: nginx
-      logging: *default-logging
-      depends_on:
-        - odoo
-      ports:
-        - "8020:80"
+  # nginx معطّل مؤقتاً — odoo يستمع مباشرة على 8069
+  # لتفعيله: docker compose --profile disabled up -d
+  # أو احذف profiles: ["disabled"] وشغّل docker compose up -d nginx
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    logging: *default-logging
+    depends_on:
+      - odoo
+    profiles:
+      - "disabled"
+    ports:
+      - "8020:80"
     volumes:
       - ./etc/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
