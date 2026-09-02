@@ -72,10 +72,14 @@ class CartellaCard(models.Model):
         index=True,
         copy=False,
     )
-    # Non-stored: recomputed on every read - no @api.depends needed since id never changes
     record_url = fields.Char(
         string='رابط السجل',
         compute='_compute_record_url',
+        store=False,
+    )
+    barcode_src = fields.Char(
+        string='مصدر صورة الباركود',
+        compute='_compute_barcode_src',
         store=False,
     )
 
@@ -110,14 +114,32 @@ class CartellaCard(models.Model):
     # ─── Compute: Record URL (absolute URL for QR scanning from mobile) ─────────
 
     def _compute_record_url(self):
-        base_url = self.env['ir.config_parameter'].sudo().get_param(
-            'web.base.url', ''
-        ).rstrip('/')
         for rec in self:
-            if rec.id:
-                rec.record_url = f"{base_url}/cartella/view/{rec.id}"
-            else:
+            if not rec.id:
                 rec.record_url = ''
+                continue
+            base_url = (
+                self.env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
+                or self.env['ir.config_parameter'].sudo().get_param('report.url', '').rstrip('/')
+            )
+            if not base_url:
+                try:
+                    from odoo.http import request
+                    base_url = request.httprequest.url_root.rstrip('/')
+                except Exception:
+                    base_url = ''
+            rec.record_url = f"{base_url}/cartella/view/{rec.id}" if base_url else f"/cartella/view/{rec.id}"
+
+    def _compute_barcode_src(self):
+        from urllib.parse import quote
+        for rec in self:
+            if rec.record_url:
+                rec.barcode_src = (
+                    "/report/barcode/?barcode_type=QR&value=%s&width=120&height=120"
+                    % quote(rec.record_url, safe='')
+                )
+            else:
+                rec.barcode_src = ''
 
     # ─── ORM Overrides ─────────────────────────────────────────────────────────
 

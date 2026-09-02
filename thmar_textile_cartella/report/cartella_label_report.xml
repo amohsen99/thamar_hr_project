@@ -142,9 +142,8 @@
 
                             <!-- ── QR Code (links directly to record URL) ── -->
                             <div style="text-align: center; margin-top: 3mm;">
-                                <t t-if="doc.record_url">
-                                    <img
-                                        t-attf-src="/report/barcode/?barcode_type=QR&amp;value={{ doc.record_url }}&amp;width=120&amp;height=120"
+                                <t t-if="doc.barcode_src">
+                                    <img t-att-src="doc.barcode_src"
                                         style="
                                             width: 28mm;
                                             height: 28mm;
