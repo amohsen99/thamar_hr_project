@@ -133,13 +133,27 @@ class CartellaCard(models.Model):
     def _compute_barcode_src(self):
         from urllib.parse import quote
         for rec in self:
-            if rec.record_url:
-                rec.barcode_src = (
-                    "/report/barcode/?barcode_type=QR&value=%s&width=120&height=120"
-                    % quote(rec.record_url, safe='')
-                )
-            else:
+            if not rec.record_url:
                 rec.barcode_src = ''
+                continue
+            # Use only the path portion so the <img> request goes to the same
+            # server that serves the report (avoids cross-host image load failures
+            # when web.base.url is set to an external domain not reachable by
+            # the client browser).
+            url = rec.record_url
+            path = url
+            for prefix in ('http://', 'https://'):
+                if path.lower().startswith(prefix):
+                    rest = path[len(prefix):]
+                    slash = rest.find('/')
+                    path = rest[slash:] if slash >= 0 else '/'
+                    break
+            if not path.startswith('/'):
+                path = '/' + path
+            rec.barcode_src = (
+                "/report/barcode/?barcode_type=QR&value=%s&width=120&height=120"
+                % quote(path, safe='')
+            )
 
     # ─── ORM Overrides ─────────────────────────────────────────────────────────
 
