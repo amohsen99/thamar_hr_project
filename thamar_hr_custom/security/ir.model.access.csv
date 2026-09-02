@@ -1,2 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_batch_generate_work_entries_wizard,batch.generate.work.entries.wizard,model_batch_generate_work_entries_wizard,hr.group_hr_manager,1,1,1,1
+access_hr_leave_department_supervisor,hr.leave.department.supervisor,hr_holidays.model_hr_leave,thamar_hr_custom.group_hr_holidays_department_supervisor,1,1,0,0
+access_hr_leave_department_manager,hr.leave.department.manager,hr_holidays.model_hr_leave,thamar_hr_custom.group_hr_holidays_department_manager,1,1,0,0
+access_hr_leave_allocation_department,hr.leave.allocation.department,hr_holidays.model_hr_leave_allocation,thamar_hr_custom.group_hr_holidays_department_supervisor,1,1,0,0
+access_hr_leave_allocation_department_manager,hr.leave.allocation.department.manager,hr_holidays.model_hr_leave_allocation,thamar_hr_custom.group_hr_holidays_department_manager,1,1,0,0

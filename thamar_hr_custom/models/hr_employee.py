@@ -12,7 +12,6 @@ class HrEmployee(models.Model):
         ('production_indirect', 'انتاجي غير مباشر'),
         ('production_direct', 'انتاجي مباشر'),
     ], string='Administrative Type')
-    supervisor_id = fields.Many2one('hr.employee', string='Supervisor', help="The person responsible for initial time off approvals.")
 
 
 class HrEmployeePublic(models.Model):
@@ -25,4 +24,3 @@ class HrEmployeePublic(models.Model):
         ('production_indirect', 'انتاجي غير مباشر'),
         ('production_direct', 'انتاجي مباشر'),
     ], string='Administrative Type', readonly=True)
-    supervisor_id = fields.Many2one('hr.employee.public', string='Supervisor', readonly=True)

@@ -13,6 +13,7 @@
     'depends': ['hr', 'hr_work_entry', 'hr_work_entry_enterprise', 'hr_work_entry_attendance', 'hr_holidays'],
     'data': [
         'security/ir.model.access.csv',
+        'security/hr_holidays_security.xml',
         'views/hr_employee_views.xml',
         'views/hr_leave_views.xml',
         'views/hr_leave_type_views.xml',

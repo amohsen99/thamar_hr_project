@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════════════
+         Cartella Label Report Template
+         Designed for thermal labels ~100x70mm or standard A4 printing
+    ═══════════════════════════════════════════════════════════════ -->
+    <template id="report_cartella_label">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- ── Label wrapper ───────────────────────────────── -->
+                        <div class="cartella-label-wrapper"
+                             style="
+                                width: 100mm;
+                                min-height: 70mm;
+                                margin: 0 auto 10mm auto;
+                                border: 1.5px solid #333;
+                                border-radius: 4px;
+                                padding: 6mm;
+                                font-family: 'Arial', sans-serif;
+                                direction: ltr;
+                                page-break-after: always;
+                             ">
+
+                            <!-- ── Company logo / Header ─────────────────── -->
+                            <div style="text-align:center; margin-bottom: 4mm; border-bottom: 1px solid #aaa; padding-bottom: 3mm;">
+                                <strong style="font-size: 13pt; color: #1a1a2e;">
+                                    CARTELLA
+                                </strong>
+                                <span style="font-size: 9pt; color: #555; margin-left: 4mm;">
+                                    <t t-esc="doc.sequence_number"/>
+                                </span>
+                            </div>
+
+                            <!-- ── Info Table (labels on left, values on right) ── -->
+                            <table style="
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 9.5pt;
+                                margin-bottom: 4mm;
+                            ">
+                                <!-- Row 1: Product Name -->
+                                <tr style="background-color: #f0f4ff;">
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        font-weight: bold;
+                                        color: #333;
+                                        white-space: nowrap;
+                                        border: 0.5px solid #ccc;
+                                        width: 35%;
+                                    ">Product Name</td>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        border: 0.5px solid #ccc;
+                                        color: #1a1a2e;
+                                        font-weight: 600;
+                                        text-align: center;
+                                    ">
+                                        <t t-esc="doc.finished_product_id.name or ''"/>
+                                    </td>
+                                </tr>
+
+                                <!-- Row 2: Sample Code -->
+                                <tr>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        font-weight: bold;
+                                        color: #333;
+                                        border: 0.5px solid #ccc;
+                                        width: 35%;
+                                    ">Sample Code</td>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        border: 0.5px solid #ccc;
+                                        color: #1a1a2e;
+                                        font-weight: 600;
+                                        text-align: center;
+                                    ">
+                                        <t t-esc="doc.reference or ''"/>
+                                    </td>
+                                </tr>
+
+                                <!-- Row 3: Width -->
+                                <tr style="background-color: #f0f4ff;">
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        font-weight: bold;
+                                        color: #333;
+                                        border: 0.5px solid #ccc;
+                                    ">Width</td>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        border: 0.5px solid #ccc;
+                                        text-align: center;
+                                    ">
+                                        <t t-esc="doc.finished_width"/> cm
+                                    </td>
+                                </tr>
+
+                                <!-- Row 4: Weight -->
+                                <tr>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        font-weight: bold;
+                                        color: #333;
+                                        border: 0.5px solid #ccc;
+                                    ">Weight</td>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        border: 0.5px solid #ccc;
+                                        text-align: center;
+                                    ">
+                                        <t t-esc="doc.finished_weight"/> g/m²
+                                    </td>
+                                </tr>
+
+                                <!-- Row 5: Code | Blend Ratio -->
+                                <tr style="background-color: #f0f4ff;">
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        font-weight: bold;
+                                        color: #333;
+                                        border: 0.5px solid #ccc;
+                                    ">Code</td>
+                                    <td style="
+                                        padding: 2mm 3mm;
+                                        border: 0.5px solid #ccc;
+                                        font-size: 8.5pt;
+                                        text-align: center;
+                                    ">
+                                        <t t-esc="doc.barcode or ''"/>
+                                        <t t-if="doc.blend_ratio_id">
+                                            <span style="color: #555; margin-left: 3mm;">|</span>
+                                            <span style="font-size: 8pt;">
+                                                <t t-esc="doc.blend_ratio_id.name or ''"/>
+                                            </span>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- ── QR Code (links directly to record URL) ── -->
+                            <div style="text-align: center; margin-top: 3mm;">
+                                <t t-if="doc.record_url">
+                                    <img
+                                        t-attf-src="/report/barcode/?barcode_type=QR&amp;value={{ doc.record_url }}&amp;width=120&amp;height=120"
+                                        style="
+                                            width: 28mm;
+                                            height: 28mm;
+                                            display: block;
+                                            margin: 0 auto 2mm auto;
+                                        "
+                                        alt="QR Code"/>
+                                </t>
+
+                                <!-- Human-readable barcode string -->
+                                <t t-if="doc.barcode">
+                                    <div style="
+                                        font-family: 'Courier New', monospace;
+                                        font-size: 9pt;
+                                        letter-spacing: 1.5px;
+                                        color: #222;
+                                        background: #f8f8f8;
+                                        border: 0.5px solid #ccc;
+                                        border-radius: 2px;
+                                        padding: 1.5mm 3mm;
+                                        display: inline-block;
+                                        margin-top: 1mm;
+                                    ">
+                                        <t t-esc="doc.barcode"/>
+                                    </div>
+                                </t>
+                            </div>
+
+                        </div><!-- /.cartella-label-wrapper -->
+                    </div><!-- /.page -->
+                </t><!-- /web.external_layout -->
+            </t><!-- /t-foreach -->
+        </t><!-- /web.html_container -->
+    </template>
+</odoo>

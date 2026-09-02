@@ -10,6 +10,16 @@
             </xpath>
             <xpath expr="//page[@name='work_information']//field[@name='parent_id']" position="after">
                 <field name="admin_type"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_form_inherit_supervisor" model="ir.ui.view">
+        <field name="name">hr.department.form.inherit.supervisor</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='manager_id']" position="after">
                 <field name="supervisor_id" widget="many2one_avatar_employee"/>
             </xpath>
         </field>

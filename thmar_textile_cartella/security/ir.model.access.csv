@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cartella_finished_product_user,cartella.finished.product user,model_cartella_finished_product,base.group_user,1,1,1,1
+access_cartella_material_category_user,cartella.material.category user,model_cartella_material_category,base.group_user,1,1,1,1
+access_cartella_raw_material_user,cartella.raw.material user,model_cartella_raw_material,base.group_user,1,1,1,1
+access_cartella_blend_ratio_user,cartella.blend.ratio user,model_cartella_blend_ratio,base.group_user,1,1,1,1
+access_cartella_card_user,cartella.card user,model_cartella_card,base.group_user,1,1,1,1
