@@ -140,10 +140,10 @@
                                 </tr>
                             </table>
 
-                            <!-- ── QR Code (links directly to record URL) ── -->
+                            <!-- ── QR Code (inline base64 — لا يعتمد على wkhtmltopdf) ── -->
                             <div style="text-align: center; margin-top: 3mm;">
-                                <t t-if="doc.barcode_src">
-                                    <img t-att-src="doc.barcode_src"
+                                <t t-if="doc.qr_image">
+                                    <img t-att-src="image_data_uri(doc.qr_image)"
                                         style="
                                             width: 28mm;
                                             height: 28mm;

@@ -1,5 +1,20 @@
 # -*- coding: utf-8 -*-
+import base64
+import logging
+from io import BytesIO
+
 from odoo import models, fields, api
+
+_logger = logging.getLogger(__name__)
+
+try:
+    import qrcode
+except ImportError:
+    qrcode = None
+    _logger.warning(
+        "thmar_textile_cartella: 'qrcode' library is not installed. "
+        "Install it via: pip install qrcode[pil]"
+    )
 
 
 class CartellaCard(models.Model):
@@ -82,6 +97,12 @@ class CartellaCard(models.Model):
         compute='_compute_barcode_src',
         store=False,
     )
+    qr_image = fields.Binary(
+        string='صورة QR',
+        compute='_compute_qr_image',
+        store=False,
+        attachment=False,
+    )
 
     # ─── Compute: Barcode ──────────────────────────────────────────────────────
 
@@ -136,10 +157,6 @@ class CartellaCard(models.Model):
             if not rec.record_url:
                 rec.barcode_src = ''
                 continue
-            # Use only the path portion so the <img> request goes to the same
-            # server that serves the report (avoids cross-host image load failures
-            # when web.base.url is set to an external domain not reachable by
-            # the client browser).
             url = rec.record_url
             path = url
             for prefix in ('http://', 'https://'):
@@ -154,6 +171,32 @@ class CartellaCard(models.Model):
                 "/report/barcode/?barcode_type=QR&value=%s&width=120&height=120"
                 % quote(path, safe='')
             )
+
+    def _compute_qr_image(self):
+        """توليد QR كصورة PNG بصيغة Base64 — لا يعتمد على wkhtmltopdf أو web.base.url."""
+        for rec in self:
+            rec.qr_image = False
+            if not rec.record_url or qrcode is None:
+                continue
+            try:
+                qr = qrcode.QRCode(
+                    version=None,
+                    error_correction=qrcode.constants.ERROR_CORRECT_M,
+                    box_size=6,
+                    border=2,
+                )
+                qr.add_data(rec.record_url)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                buf = BytesIO()
+                img.save(buf, format='PNG')
+                rec.qr_image = base64.b64encode(buf.getvalue())
+            except Exception:
+                _logger.exception(
+                    "thmar_textile_cartella: failed to generate QR for record %s",
+                    rec.id,
+                )
+                rec.qr_image = False
 
     # ─── ORM Overrides ─────────────────────────────────────────────────────────
 
