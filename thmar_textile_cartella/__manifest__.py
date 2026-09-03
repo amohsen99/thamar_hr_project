@@ -26,14 +26,16 @@
         # Views - master data
         'views/cartella_finished_product_views.xml',
         'views/cartella_category_views.xml',
-        # Reports (must load before card views to define paperformat first)
-        'report/cartella_label_report.xml',
         # Views - core
         'views/cartella_card_views.xml',
         # Public web page (QR scan landing page)
         'views/cartella_card_public_page.xml',
+        # Print web page (browser print)
+        'views/cartella_card_print_page.xml',
         # Menu
         'views/cartella_menu.xml',
+        # Reports
+        'report/cartella_label_report.xml',
     ],
     'installable': True,
     'application': True,

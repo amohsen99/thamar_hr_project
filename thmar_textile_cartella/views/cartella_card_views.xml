@@ -64,10 +64,10 @@
                         </group>
                     </group>
 
-                    <!-- ─── Barcode / URL (read-only info) ──── -->
-                    <group string="الباركود والروابط" col="2">
-                        <field name="barcode" readonly="1"/>
+                    <!-- ─── Links ───────────────────────────── -->
+                    <group string="روابط" col="2">
                         <field name="record_url" readonly="1" widget="url" invisible="not id"/>
+                        <field name="print_label_url" readonly="1" widget="url" invisible="not id"/>
                     </group>
                 </sheet>
             </form>
@@ -154,11 +154,11 @@
     <record id="action_report_cartella_label" model="ir.actions.report">
         <field name="name">طباعة ملصق الكارتيلة</field>
         <field name="model">cartella.card</field>
-        <field name="report_type">qweb-html</field>
+        <field name="report_type">qweb-pdf</field>
         <field name="report_name">thmar_textile_cartella.report_cartella_label</field>
         <field name="report_file">thmar_textile_cartella.report_cartella_label</field>
         <field name="binding_model_id" ref="model_cartella_card"/>
         <field name="binding_type">report</field>
-        <field name="paperformat_id" ref="thmar_textile_cartella.paperformat_label_70x100"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
     </record>
 </odoo>

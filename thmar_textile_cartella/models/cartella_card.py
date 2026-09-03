@@ -64,24 +64,22 @@ class CartellaCard(models.Model):
 
     # ─── Finished Product Specifications ───────────────────────────────────────
 
-    finished_weight = fields.Float(
+    finished_weight = fields.Char(
         string='وزن المنتج التام',
-        digits=(10, 3),
+        
     )
-    finished_width = fields.Float(
+    finished_width = fields.Char(
         string='عرض المنتج التام',
-        digits=(10, 2),
+        
     )
 
     # ─── Raw Material Specifications ───────────────────────────────────────────
 
-    raw_weight = fields.Float(
+    raw_weight = fields.Char(
         string='وزن المنتج الخام',
-        digits=(10, 3),
     )
-    raw_width = fields.Float(
+    raw_width = fields.Char(
         string='عرض المنتج الخام',
-        digits=(10, 2),
     )
     yarn_count = fields.Char(
         string='نمرة الخيط',
@@ -99,6 +97,29 @@ class CartellaCard(models.Model):
         default='جديد',
     )
 
+    # ─── Computed Display Fields ───────────────────────────────────────────────
+
+    finished_weight_display = fields.Char(
+        string='وزن المنتج التام',
+        compute='_compute_display_values',
+        store=False,
+    )
+    finished_width_display = fields.Char(
+        string='عرض المنتج التام',
+        compute='_compute_display_values',
+        store=False,
+    )
+    raw_weight_display = fields.Char(
+        string='وزن المنتج الخام',
+        compute='_compute_display_values',
+        store=False,
+    )
+    raw_width_display = fields.Char(
+        string='عرض المنتج الخام',
+        compute='_compute_display_values',
+        store=False,
+    )
+
     # ─── Computed Fields ───────────────────────────────────────────────────────
 
     barcode = fields.Char(
@@ -111,6 +132,11 @@ class CartellaCard(models.Model):
     record_url = fields.Char(
         string='رابط السجل',
         compute='_compute_record_url',
+        store=False,
+    )
+    print_label_url = fields.Char(
+        string='طباعة الملصق',
+        compute='_compute_print_label_url',
         store=False,
     )
     barcode_src = fields.Char(
@@ -157,12 +183,28 @@ class CartellaCard(models.Model):
         for rec in self:
             parts = []
             if rec.cotton_ratio:
-                parts.append(f"Cotton {rec.cotton_ratio:.2f}%")
+                parts.append(f"Cotton {rec.cotton_ratio}%")
             if rec.polyester_ratio:
-                parts.append(f"Polyester {rec.polyester_ratio:.2f}%")
+                parts.append(f"Polyester {rec.polyester_ratio}%")
             if rec.lycra_ratio:
-                parts.append(f"Lycra {rec.lycra_ratio:.2f}%")
+                parts.append(f"Lycra {rec.lycra_ratio}%")
             rec.blend_ratio_id = ' - '.join(parts) if parts else ''
+
+    @api.depends('finished_weight', 'finished_width', 'raw_weight', 'raw_width')
+    def _compute_display_values(self):
+        for rec in self:
+            rec.finished_weight_display = self._format_number(rec.finished_weight, 3)
+            rec.finished_width_display = self._format_number(rec.finished_width, 2)
+            rec.raw_weight_display = self._format_number(rec.raw_weight, 3)
+            rec.raw_width_display = self._format_number(rec.raw_width, 2)
+
+    @api.model
+    def _format_number(self, value, decimals=2):
+        if not value:
+            return ''
+        if isinstance(value, (int, float)):
+            return f"{float(value):.{decimals}f}"
+        return str(value).strip()
 
     # ─── Compute: Record URL (absolute URL for QR scanning from mobile) ─────────
 
@@ -203,6 +245,13 @@ class CartellaCard(models.Model):
         except Exception:
             pass
         return web_base
+
+    def _compute_print_label_url(self):
+        for rec in self:
+            if rec.id:
+                rec.print_label_url = f"/cartella/print/{rec.id}"
+            else:
+                rec.print_label_url = ''
 
     def _compute_barcode_src(self):
         from urllib.parse import quote

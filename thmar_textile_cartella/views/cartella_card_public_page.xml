@@ -103,8 +103,9 @@
                     }
 
                     .crt-title-label {
-                        font-size: 10px;
-                        color: #666;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #000000;
                         text-transform: uppercase;
                         letter-spacing: 1px;
                     }
@@ -134,8 +135,9 @@
                     }
 
                     .crt-spec-label {
-                        font-size: 10px;
-                        color: #777;
+                        font-size: 12px;
+                        color: #0a0909;
+                        font-weight: 600;
                         text-transform: uppercase;
                         letter-spacing: 0.8px;
                         margin-bottom: 4px;
@@ -290,8 +292,7 @@
                             <div class="crt-spec">
                                 <div class="crt-spec-label">عرض التام / Width</div>
                                 <div class="crt-spec-value accent">
-                                    <t t-esc="'%.2f' % card.finished_width"/>
-                                    <small>سم</small>
+                                    <t t-esc="card.finished_width_display or '—'"/> <small>سم</small>
                                 </div>
                             </div>
 
@@ -299,25 +300,25 @@
                             <div class="crt-spec">
                                 <div class="crt-spec-label">وزن التام / Weight</div>
                                 <div class="crt-spec-value accent">
-                                    <t t-esc="'%.3f' % card.finished_weight"/>
-                                    <small>جم/م²</small>
+                                    <t t-esc="card.finished_weight_display or '—'"/> <small>جم/م²</small>
                                 </div>
                             </div>
 
                             <!-- Raw width -->
-                            <!-- <div class="crt-spec">
+                            <div class="crt-spec">
                                 <div class="crt-spec-label">عرض الخام / Raw Width</div>
                                 <div class="crt-spec-value">
-                                    <t t-esc="'%.2f' % card.raw_width"/>
+                                    <t t-esc="card.raw_width_display or '—'"/>
                                 </div>
                             </div>
 
+                            <!-- Raw weight -->
                             <div class="crt-spec">
                                 <div class="crt-spec-label">وزن الخام / Raw Weight</div>
                                 <div class="crt-spec-value">
-                                    <t t-esc="'%.3f' % card.raw_weight"/>
+                                    <t t-esc="card.raw_weight_display or '—'"/>
                                 </div>
-                            </div> -->
+                            </div>
 
                             <!-- Yarn count -->
                             <t t-if="card.yarn_count">

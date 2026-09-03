@@ -32,3 +32,20 @@ class CartellaController(http.Controller):
                 'backend_url': f'{base_url}/odoo/cartella.card/{card.id}',
             },
         )
+
+    @http.route(
+        '/cartella/print/<int:record_id>',
+        type='http',
+        auth='user',
+        methods=['GET'],
+        sitemap=False,
+    )
+    def print_cartella_card(self, record_id, **kwargs):
+        card = request.env['cartella.card'].sudo().browse(record_id)
+        if not card.exists():
+            return request.not_found()
+
+        return request.render(
+            'thmar_textile_cartella.cartella_card_print_page',
+            {'card': card},
+        )
