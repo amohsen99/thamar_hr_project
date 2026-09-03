@@ -55,8 +55,8 @@ services:
     depends_on:
       - pg-db
     ports:
-      - "8069:8069"   # Web — مباشر بدون reverse proxy
-      - "8072:8072"   # WebSocket / Longpolling
+      - "8069:8069"
+      - "8072:8072"
     environment:
       - HOST=pg-db
       - USER=odoo19

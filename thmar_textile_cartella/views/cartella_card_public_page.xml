@@ -2,8 +2,7 @@
 <odoo>
     <!--
         Public mobile web page for cartella cards.
-        Standalone HTML — does NOT inherit web.layout to avoid
-        Bootstrap/Odoo CSS conflicts with our dark glassmorphism design.
+        Clean gray/white design with bilingual Arabic/English labels.
     -->
     <template id="cartella_card_public_page" name="Cartella Card - Public View">
         <html lang="ar" dir="rtl">
@@ -11,275 +10,243 @@
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
                 <meta name="robots" content="noindex, nofollow"/>
-                <meta name="theme-color" content="#0f0c29"/>
                 <title>
                     كارتيلة - <t t-esc="card.sequence_number"/>
                 </title>
                 <style>
-/* ── Reset ─────────────────────────────────────────────────── */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+                    *, *::before, *::after {
+                        box-sizing: border-box;
+                        margin: 0;
+                        padding: 0;
+                    }
 
-html, body {
-    height: 100%;
-}
+                    html, body {
+                        height: 100%;
+                    }
 
-body {
-    font-family: 'Segoe UI', 'Cairo', 'Tahoma', 'Arial', sans-serif;
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    background-attachment: fixed;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    direction: rtl;
-    padding: 24px 16px 40px;
-    color: #fff;
-    -webkit-font-smoothing: antialiased;
-}
+                    body {
+                        font-family: 'Segoe UI', 'Cairo', 'Tahoma', 'Arial', sans-serif;
+                        background: #f0f2f5;
+                        min-height: 100vh;
+                        padding: 20px 12px 40px;
+                        color: #222;
+                        -webkit-font-smoothing: antialiased;
+                    }
 
-/* ── Page container ─────────────────────────────────────────── */
-.crt-page {
-    width: 100%;
-    max-width: 440px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
+                    /* Page container */
+                    .crt-page {
+                        max-width: 420px;
+                        margin: 0 auto;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 14px;
+                    }
 
-/* ── Header ─────────────────────────────────────────────────── */
-.crt-header {
-    text-align: center;
-    padding: 4px 0 8px;
-}
+                    /* Header */
+                    .crt-header {
+                        text-align: center;
+                        padding: 8px 0 4px;
+                    }
 
-.crt-brand {
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 10px;
-}
+                    .crt-brand {
+                        font-size: 11px;
+                        letter-spacing: 3px;
+                        text-transform: uppercase;
+                        color: #888;
+                        margin-bottom: 10px;
+                    }
 
-.crt-seq {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 50px;
-    padding: 8px 22px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 1.5px;
-}
+                    .crt-seq {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        background: #fff;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 50px;
+                        padding: 8px 22px;
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: #222;
+                        letter-spacing: 1px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                    }
 
-/* ── Main glass card ────────────────────────────────────────── */
-.crt-card {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 22px;
-    overflow: hidden;
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-}
+                    /* Main card */
+                    .crt-card {
+                        background: #ffffff;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+                    }
 
-/* product title bar */
-.crt-title-bar {
-    background: linear-gradient(90deg, #6c63ff, #48c6ef);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+                    /* Product title bar */
+                    .crt-title-bar {
+                        background: #e9ecef;
+                        padding: 14px 18px;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        border-bottom: 1px solid #d5d9e0;
+                    }
 
-.crt-title-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-}
+                    .crt-title-icon {
+                        width: 38px;
+                        height: 38px;
+                        border-radius: 10px;
+                        background: #dee2e6;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                        flex-shrink: 0;
+                    }
 
-.crt-title-label {
-    font-size: 11px;
-    color: rgba(255,255,255,0.75);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
+                    .crt-title-label {
+                        font-size: 10px;
+                        color: #666;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
 
-.crt-title-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
-    margin-top: 2px;
-    line-height: 1.3;
-}
+                    .crt-title-value {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #111;
+                        margin-top: 2px;
+                        line-height: 1.3;
+                    }
 
-/* ── Specs grid ─────────────────────────────────────────────── */
-.crt-specs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
+                    /* Specs grid */
+                    .crt-specs {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                    }
 
-.crt-spec {
-    padding: 15px 18px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    border-left: 1px solid rgba(255,255,255,0.06);
-    transition: background 0.2s;
-}
+                    .crt-spec {
+                        padding: 14px 16px;
+                        border-top: 1px solid #f0f2f5;
+                        border-left: 1px solid #f0f2f5;
+                    }
 
-.crt-spec:nth-child(odd) {
-    border-left: none;
-}
+                    .crt-spec:nth-child(odd) {
+                        border-left: none;
+                    }
 
-.crt-spec:hover {
-    background: rgba(255,255,255,0.05);
-}
+                    .crt-spec-label {
+                        font-size: 10px;
+                        color: #777;
+                        text-transform: uppercase;
+                        letter-spacing: 0.8px;
+                        margin-bottom: 4px;
+                    }
 
-.crt-spec-label {
-    font-size: 10px;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 5px;
-}
+                    .crt-spec-value {
+                        font-size: 15px;
+                        font-weight: 600;
+                        color: #111;
+                        line-height: 1.3;
+                    }
 
-.crt-spec-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    line-height: 1.3;
-}
+                    .crt-spec-value.accent {
+                        color: #495057;
+                    }
 
-.crt-spec-value.accent {
-    color: #a29bfe;
-}
+                    .crt-spec-value.mono {
+                        font-family: 'Courier New', monospace;
+                        font-size: 13px;
+                        letter-spacing: 1px;
+                        color: #495057;
+                    }
 
-.crt-spec-value.mono {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    letter-spacing: 1px;
-    color: #74b9ff;
-}
+                    .crt-spec-value small {
+                        font-size: 10px;
+                        color: #888;
+                        font-weight: 400;
+                        margin-right: 2px;
+                    }
 
-.crt-spec-value small {
-    font-size: 10px;
-    color: rgba(255,255,255,0.35);
-    font-weight: 400;
-    margin-right: 2px;
-}
+                    .crt-spec.wide {
+                        grid-column: 1 / -1;
+                        border-left: none;
+                    }
 
-.crt-spec.wide {
-    grid-column: 1 / -1;
-    border-left: none;
-}
+                    /* QR section */
+                    .crt-qr-section {
+                        background: #ffffff;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 16px;
+                        padding: 22px 18px;
+                        text-align: center;
+                        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+                    }
 
-/* ── QR section ─────────────────────────────────────────────── */
-.crt-qr-section {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 22px;
-    padding: 24px 20px;
-    text-align: center;
-    box-shadow:
-        0 10px 40px rgba(0,0,0,0.3),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-}
+                    .crt-qr-title {
+                        font-size: 10px;
+                        color: #777;
+                        text-transform: uppercase;
+                        letter-spacing: 2.5px;
+                        margin-bottom: 14px;
+                    }
 
-.crt-qr-title {
-    font-size: 10px;
-    color: rgba(255,255,255,0.35);
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    margin-bottom: 18px;
-}
+                    .crt-qr-img {
+                        width: 160px;
+                        height: 160px;
+                        background: #fff;
+                        padding: 8px;
+                        display: block;
+                        margin: 0 auto 14px;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 12px;
+                    }
 
-.crt-qr-img {
-    width: 170px;
-    height: 170px;
-    border-radius: 16px;
-    background: #fff;
-    padding: 10px;
-    display: block;
-    margin: 0 auto 16px;
-    box-shadow:
-        0 4px 30px rgba(108,99,255,0.5),
-        0 0 0 1px rgba(108,99,255,0.3);
-}
+                    .crt-barcode-str {
+                        display: inline-block;
+                        font-family: 'Courier New', monospace;
+                        font-size: 12px;
+                        letter-spacing: 1.5px;
+                        color: #495057;
+                        background: #f8f9fa;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 6px;
+                        padding: 7px 14px;
+                    }
 
-.crt-barcode-str {
-    display: inline-block;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    letter-spacing: 2px;
-    color: #a29bfe;
-    background: rgba(108,99,255,0.12);
-    border: 1px solid rgba(108,99,255,0.3);
-    border-radius: 8px;
-    padding: 8px 16px;
-}
+                    /* Action button */
+                    .crt-btn {
+                        display: block;
+                        width: 100%;
+                        padding: 14px;
+                        background: #e9ecef;
+                        color: #222;
+                        font-size: 14px;
+                        font-weight: 700;
+                        border: 1px solid #d5d9e0;
+                        border-radius: 14px;
+                        text-align: center;
+                        text-decoration: none;
+                        cursor: pointer;
+                        letter-spacing: 0.5px;
+                    }
 
-/* ── Action button ──────────────────────────────────────────── */
-.crt-btn {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(90deg, #6c63ff, #48c6ef);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    border: none;
-    border-radius: 16px;
-    text-align: center;
-    text-decoration: none;
-    cursor: pointer;
-    box-shadow:
-        0 8px 30px rgba(108,99,255,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.2);
-    letter-spacing: 0.5px;
-    transition: opacity 0.2s, transform 0.15s;
-}
+                    .crt-btn:hover {
+                        background: #dee2e6;
+                    }
 
-.crt-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(108,99,255,0.6);
-}
+                    /* Footer */
+                    .crt-footer {
+                        text-align: center;
+                        color: #999;
+                        font-size: 11px;
+                        padding-bottom: 4px;
+                    }
 
-.crt-btn:active {
-    transform: translateY(0);
-}
-
-/* ── Footer ─────────────────────────────────────────────────── */
-.crt-footer {
-    text-align: center;
-    color: rgba(255,255,255,0.2);
-    font-size: 11px;
-    padding-bottom: 4px;
-}
-
-/* ── Responsive ─────────────────────────────────────────────── */
-@media (max-width: 360px) {
-    .crt-specs { grid-template-columns: 1fr; }
-    .crt-spec { border-left: none; }
-    .crt-spec.wide { grid-column: 1; }
-}
+                    /* Responsive */
+                    @media (max-width: 360px) {
+                        .crt-specs { grid-template-columns: 1fr; }
+                        .crt-spec { border-left: none; }
+                        .crt-spec.wide { grid-column: 1; }
+                    }
                 </style>
             </head>
             <body>
@@ -287,9 +254,9 @@ body {
 
                     <!-- Header -->
                     <div class="crt-header">
-                        <div class="crt-brand">Al-Omar Group &#160;·&#160; الكارتيلات</div>
+                        <div class="crt-brand">Al-Omar Group · الكارتيلات</div>
                         <div class="crt-seq">
-                            🏷 &#160;
+                            🏷
                             <t t-esc="card.sequence_number or 'N/A'"/>
                         </div>
                     </div>
@@ -301,7 +268,7 @@ body {
                         <div class="crt-title-bar">
                             <div class="crt-title-icon">🧵</div>
                             <div>
-                                <div class="crt-title-label">اسم المنتج التام</div>
+                                <div class="crt-title-label">اسم المنتج التام / Product Name</div>
                                 <div class="crt-title-value">
                                     <t t-esc="card.finished_product_id.name or '—'"/>
                                 </div>
@@ -311,11 +278,11 @@ body {
                         <!-- Specs -->
                         <div class="crt-specs">
 
-                            <!-- Raw detail (full-width if present) -->
+                            <!-- Raw detail -->
                             <t t-if="card.raw_material_detail">
                                 <div class="crt-spec wide">
-                                    <div class="crt-spec-label">اسم المنتج الخام بالتفصيل</div>
-                                    <div class="crt-spec-value" style="font-size:14px; color:rgba(255,255,255,0.7);">
+                                    <div class="crt-spec-label">الخام بالتفصيل / Raw Material</div>
+                                    <div class="crt-spec-value" style="font-size:14px; color:#444;">
                                         <t t-esc="card.raw_material_detail"/>
                                     </div>
                                 </div>
@@ -323,7 +290,7 @@ body {
 
                             <!-- Finished width -->
                             <div class="crt-spec">
-                                <div class="crt-spec-label">عرض التام</div>
+                                <div class="crt-spec-label">عرض التام / Width</div>
                                 <div class="crt-spec-value accent">
                                     <t t-esc="'%.2f' % card.finished_width"/>
                                     <small>سم</small>
@@ -332,7 +299,7 @@ body {
 
                             <!-- Finished weight -->
                             <div class="crt-spec">
-                                <div class="crt-spec-label">وزن التام</div>
+                                <div class="crt-spec-label">وزن التام / Weight</div>
                                 <div class="crt-spec-value accent">
                                     <t t-esc="'%.3f' % card.finished_weight"/>
                                     <small>جم/م²</small>
@@ -341,7 +308,7 @@ body {
 
                             <!-- Raw width -->
                             <div class="crt-spec">
-                                <div class="crt-spec-label">عرض الخام</div>
+                                <div class="crt-spec-label">عرض الخام / Raw Width</div>
                                 <div class="crt-spec-value">
                                     <t t-esc="'%.2f' % card.raw_width"/>
                                 </div>
@@ -349,7 +316,7 @@ body {
 
                             <!-- Raw weight -->
                             <div class="crt-spec">
-                                <div class="crt-spec-label">وزن الخام</div>
+                                <div class="crt-spec-label">وزن الخام / Raw Weight</div>
                                 <div class="crt-spec-value">
                                     <t t-esc="'%.3f' % card.raw_weight"/>
                                 </div>
@@ -358,7 +325,7 @@ body {
                             <!-- Yarn count -->
                             <t t-if="card.yarn_count">
                                 <div class="crt-spec">
-                                    <div class="crt-spec-label">نمرة الخيط</div>
+                                    <div class="crt-spec-label">نمرة الخيط / Yarn Count</div>
                                     <div class="crt-spec-value">
                                         <t t-esc="card.yarn_count"/>
                                     </div>
@@ -368,9 +335,9 @@ body {
                             <!-- Blend ratio -->
                             <t t-if="card.blend_ratio_id">
                                 <div class="crt-spec">
-                                    <div class="crt-spec-label">نسبة الخلط</div>
-                                    <div class="crt-spec-value" style="font-size:13px; color:rgba(255,255,255,0.65);">
-                                        <t t-esc="card.blend_ratio_id.name"/>
+                                    <div class="crt-spec-label">نسبة الخلط / Composition</div>
+                                    <div class="crt-spec-value" style="font-size:13px; color:#444;">
+                                        <t t-esc="card.blend_ratio_id or ''"/>
                                     </div>
                                 </div>
                             </t>
@@ -378,7 +345,7 @@ body {
                             <!-- Reference -->
                             <t t-if="card.reference">
                                 <div class="crt-spec wide">
-                                    <div class="crt-spec-label">الكود / المرجع</div>
+                                    <div class="crt-spec-label">الكود / المرجع / Sample Code</div>
                                     <div class="crt-spec-value mono">
                                         <t t-esc="card.reference"/>
                                     </div>
@@ -391,7 +358,7 @@ body {
                     <!-- QR code section -->
                     <!-- <t t-if="card.record_url">
                         <div class="crt-qr-section">
-                            <div class="crt-qr-title">QR Code &#160;·&#160; امسح للمشاركة</div>
+                            <div class="crt-qr-title">QR Code · امسح للمشاركة</div>
                             <img
                                 class="crt-qr-img"
                                 t-attf-src="/report/barcode/?barcode_type=QR&amp;value={{ card.record_url }}&amp;width=300&amp;height=300"
@@ -406,12 +373,12 @@ body {
 
                     <!-- Open in backend -->
                     <a t-attf-href="{{ backend_url }}" class="crt-btn">
-                        ⚙&#xFE0E;&#160; فتح في النظام
+                        ⚙ فتح في النظام / Open in Backend
                     </a>
 
                     <!-- Footer -->
                     <div class="crt-footer">
-                        Al-Omar Group &#160;·&#160; العمر جروب
+                        Al-Omar Group · العمر جروب
                     </div>
 
                 </div><!-- /.crt-page -->

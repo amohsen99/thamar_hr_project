@@ -36,23 +36,9 @@
         sequence="10"/>
 
     <menuitem
-        id="menu_cartella_material_categories"
-        name="فئات الخامات"
+        id="menu_cartella_categories"
+        name="فئات الكارتيلة"
         parent="menu_cartella_config"
-        action="action_cartella_material_category"
+        action="action_cartella_category"
         sequence="20"/>
-
-    <menuitem
-        id="menu_cartella_raw_materials"
-        name="الخامات"
-        parent="menu_cartella_config"
-        action="action_cartella_raw_material"
-        sequence="30"/>
-
-    <menuitem
-        id="menu_cartella_blend_ratios"
-        name="نسب الخلط"
-        parent="menu_cartella_config"
-        action="action_cartella_blend_ratio"
-        sequence="40"/>
 </odoo>

@@ -35,10 +35,31 @@ class CartellaCard(models.Model):
         required=True,
         ondelete='restrict',
     )
-    blend_ratio_id = fields.Many2one(
-        comodel_name='cartella.blend.ratio',
-        string='نسب الخلط',
-        ondelete='set null',
+    category_id = fields.Many2one(
+        comodel_name='cartella.category',
+        string='الفئة',
+        required=True,
+        ondelete='restrict',
+    )
+
+    # ─── Blend Ratios ──────────────────────────────────────────────────────────
+
+    cotton_ratio = fields.Float(
+        string='نسبة القطن (%)',
+        digits=(5, 2),
+    )
+    polyester_ratio = fields.Float(
+        string='نسبة البوليستر (%)',
+        digits=(5, 2),
+    )
+    lycra_ratio = fields.Float(
+        string='نسبة الليكرا (%)',
+        digits=(5, 2),
+    )
+    blend_ratio_id = fields.Char(
+        string='نسبة الخلط',
+        compute='_compute_blend_ratio',
+        store=True,
     )
 
     # ─── Finished Product Specifications ───────────────────────────────────────
@@ -109,9 +130,8 @@ class CartellaCard(models.Model):
     @api.depends(
         'finished_product_id',
         'finished_product_id.code',
-        'blend_ratio_id',
-        'blend_ratio_id.material_id',
-        'blend_ratio_id.material_id.category_code',
+        'category_id',
+        'category_id.code',
         'sequence_number',
     )
     def _compute_barcode(self):
@@ -120,17 +140,29 @@ class CartellaCard(models.Model):
             # Part 1: Finished Product Code
             if rec.finished_product_id and rec.finished_product_id.code:
                 parts.append(rec.finished_product_id.code.strip())
-            # Part 2: Material Category Code (from blend ratio)
-            if rec.blend_ratio_id and rec.blend_ratio_id.material_id:
-                cat_code = rec.blend_ratio_id.material_id.category_code or ''
-                if cat_code:
-                    parts.append(cat_code.strip())
+            # Part 2: Category Code
+            if rec.category_id and rec.category_id.code:
+                parts.append(rec.category_id.code.strip())
             # Part 3: Sequence number (skip placeholder)
             seq = rec.sequence_number or ''
             if seq and seq != 'جديد':
                 parts.append(seq.strip())
 
             rec.barcode = '-'.join(parts) if parts else ''
+
+    # ─── Compute: Blend Ratio Text ─────────────────────────────────────────────
+
+    @api.depends('cotton_ratio', 'polyester_ratio', 'lycra_ratio')
+    def _compute_blend_ratio(self):
+        for rec in self:
+            parts = []
+            if rec.cotton_ratio:
+                parts.append(f"Cotton {rec.cotton_ratio:.2f}%")
+            if rec.polyester_ratio:
+                parts.append(f"Polyester {rec.polyester_ratio:.2f}%")
+            if rec.lycra_ratio:
+                parts.append(f"Lycra {rec.lycra_ratio:.2f}%")
+            rec.blend_ratio_id = ' - '.join(parts) if parts else ''
 
     # ─── Compute: Record URL (absolute URL for QR scanning from mobile) ─────────
 
@@ -171,21 +203,6 @@ class CartellaCard(models.Model):
         except Exception:
             pass
         return web_base
-
-    def _get_public_base_url(self):
-        """يرجع الـ base URL العام المستخدم في الـ QR (مع المنفذ 8019 أو 8069 حسب الإعداد)."""
-        param = self.env['ir.config_parameter'].sudo()
-        url = param.get_param('thmar_textile_cartella.public_base_url', '').rstrip('/')
-        if url:
-            return url
-        url = param.get_param('web.base.url', '').rstrip('/')
-        if url:
-            return url
-        try:
-            from odoo.http import request
-            return request.httprequest.url_root.rstrip('/')
-        except Exception:
-            return ''
 
     def _compute_barcode_src(self):
         from urllib.parse import quote
