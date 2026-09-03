@@ -23,6 +23,7 @@
                             <field name="finished_product_id"/>
                             <field name="category_id"/>
                             <field name="reference"/>
+                            <field name="raw_material_detail"/>
                         </group>
                         <group>
                             <field name="blend_ratio_id" readonly="1"/>

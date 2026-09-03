@@ -279,14 +279,12 @@
                         <div class="crt-specs">
 
                             <!-- Raw detail -->
-                            <t t-if="card.raw_material_detail">
-                                <div class="crt-spec wide">
-                                    <div class="crt-spec-label">الخام بالتفصيل / Raw Material</div>
-                                    <div class="crt-spec-value" style="font-size:14px; color:#444;">
-                                        <t t-esc="card.raw_material_detail"/>
-                                    </div>
+                            <div class="crt-spec wide">
+                                <div class="crt-spec-label">الخام بالتفصيل / Raw Material</div>
+                                <div class="crt-spec-value" style="font-size:14px; color:#444;">
+                                    <t t-esc="card.raw_material_detail or '—'"/>
                                 </div>
-                            </t>
+                            </div>
 
                             <!-- Finished width -->
                             <div class="crt-spec">
@@ -307,7 +305,7 @@
                             </div>
 
                             <!-- Raw width -->
-                            <div class="crt-spec">
+                            <!-- <div class="crt-spec">
                                 <div class="crt-spec-label">عرض الخام / Raw Width</div>
                                 <div class="crt-spec-value">
                                     <t t-esc="'%.2f' % card.raw_width"/>
@@ -320,7 +318,7 @@
                                 <div class="crt-spec-value">
                                     <t t-esc="'%.3f' % card.raw_weight"/>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- Yarn count -->
                             <t t-if="card.yarn_count">
